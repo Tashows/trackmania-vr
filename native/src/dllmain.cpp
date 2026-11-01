@@ -7,7 +7,7 @@
 
 #include <cstdint>
 
-#define TMVR_VERSION "0.1.0"
+#define TMVR_VERSION "0.1.1"
 
 namespace tmvr {
 namespace {

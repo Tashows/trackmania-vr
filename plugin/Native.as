@@ -87,14 +87,11 @@ namespace Native
 		}
 		g_loadError = "";
 
-		string dir = Meta::ExecutingPlugin().SourcePath;
-		if (!dir.EndsWith("/") && !dir.EndsWith("\\")) {
-			dir += "/";
+		string dir = BinaryFolder();
+		if (dir.Length == 0) {
+			return false;
 		}
 		@g_lib = Import::GetLibrary(dir + "TrackmaniaVR.dll");
-		if (g_lib is null) {
-			@g_lib = Import::GetLibrary("TrackmaniaVR.dll");
-		}
 		if (g_lib is null) {
 			return Fail("Could not load TrackmaniaVR.dll from " + dir);
 		}
@@ -125,6 +122,46 @@ namespace Native
 		g_shared = shared;
 		print("TrackmaniaVR.dll loaded");
 		return true;
+	}
+
+	// The DLL loads openxr_loader.dll and runs dxgi_probe.exe from its own folder.
+	const array<string> BINARIES = { "TrackmaniaVR.dll", "openxr_loader.dll", "dxgi_probe.exe" };
+
+	// Where the binaries can be loaded from. An unpacked plugin folder has them already. Windows
+	// can't load a DLL from inside a packed .op, so those are copied to the plugin's storage
+	// folder first, one folder per version: a loaded DLL stays in use until the game exits.
+	string BinaryFolder()
+	{
+		string dir = Meta::ExecutingPlugin().SourcePath;
+		if (!dir.EndsWith("/") && !dir.EndsWith("\\")) {
+			dir += "/";
+		}
+		if (IO::FileExists(dir + BINARIES[0])) {
+			return dir;
+		}
+
+		dir = IO::FromStorageFolder("bin/" + Meta::ExecutingPlugin().Version + "/");
+		IO::CreateFolder(dir);
+		for (uint i = 0; i < BINARIES.Length; i++) {
+			IO::FileSource source(BINARIES[i]);
+			uint64 size = source.Size();
+			if (size == 0) {
+				Fail(BINARIES[i] + " is missing from the plugin");
+				return "";
+			}
+			string target = dir + BINARIES[i];
+			if (IO::FileExists(target) && IO::FileSize(target) == size) {
+				continue;
+			}
+			IO::File file(target, IO::FileMode::Write);
+			file.Write(source.Read(size));
+			file.Close();
+			if (IO::FileSize(target) != size) {
+				Fail("Could not write " + target);
+				return "";
+			}
+		}
+		return dir;
 	}
 
 	bool Fail(const string &in message)

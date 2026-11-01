@@ -60,6 +60,9 @@ VR testing.
 powershell -ExecutionPolicy Bypass -File .\build.ps1
 ```
 
+`-Package` instead creates `build\package\TrackmaniaVR-<version>.op` for a release. It never
+replaces an existing version's package (pass `-Overwrite` to rebuild one deliberately).
+
 Close Trackmania first: Windows locks the DLL while the plugin has it loaded.
 
 ## In-headset controls
@@ -87,8 +90,10 @@ calibration is running.
 ## Testing (in this order)
 
 Logs to check after each step:
-- `%USERPROFILE%\OpenplanetNext\Plugins\TrackmaniaVR\TrackmaniaVR.log`: native side, with a
-  stats line every 5 seconds
+- `TrackmaniaVR.log`: native side, with a stats line every 5 seconds. It's next to
+  `TrackmaniaVR.dll`: in `%USERPROFILE%\OpenplanetNext\Plugins\TrackmaniaVR\` for an unpacked
+  plugin, or `%USERPROFILE%\OpenplanetNext\PluginStorage\<plugin>\bin\<version>\` for an `.op`
+  (the plugin copies its binaries there, since Windows can't load a DLL from inside a zip)
 - `%USERPROFILE%\OpenplanetNext\Openplanet.log`: plugin side, including script errors
 
 ### 1. Plugin and DLL load
