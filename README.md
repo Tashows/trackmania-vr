@@ -18,6 +18,8 @@ build.ps1 builds the DLL and installs everything into OpenplanetNext\Plugins\Tra
 3) Place it in %USERPROFILE%\OpenplanetNext\Plugins (replace %USERPROFILE% with your windows local user name)
 4) Start SteamVR, then launch Trackmania
 5) Once the game launches, press F3 to view the openplanet menu and select signature mode -> Developer. This should automatically enable the plugin. This plugin is not reviewed/verified by Openplanet and thus has restricted capabilities: no leaderboard records, and online play will be blocked on most maps.
+6) The plugin interface will open up. Press "Start VR" and wear your headset.
+7) Get into a map and press F7 to make the plugin UI visible in VR, then F10 to enter the calibration mode (if head tracking doesn't seem to be working right).
 
 ## How it works
 
