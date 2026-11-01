@@ -2,6 +2,9 @@
 
 Full 6DoF VR for Trackmania (2020): an Openplanet plugin plus a native OpenXR bridge DLL.
 
+> **AI disclosure:** this plugin is mostly AI-generated (written with Claude by Anthropic). A human
+> guided the design, made the decisions and tested every change in VR.
+
 ```
 plugin/   Openplanet plugin (AngelScript): loads the DLL, writes the per-eye camera, status window
 native/   TrackmaniaVR.dll (C++): Present hook, OpenXR session, frame submission
