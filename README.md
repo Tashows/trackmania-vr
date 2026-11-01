@@ -13,14 +13,14 @@ build.ps1 builds the DLL and installs everything into OpenplanetNext\Plugins\Tra
 1. The DLL patches DXGI's `Present`, so it sees every finished game frame and gets the game's
    own D3D11 device, which it hands to OpenXR (SteamVR).
 2. **Alternate-eye rendering.** The game renders once per frame. Even frames render the left eye
-   and odd frames the right eye. Each game frame, the plugin reads the game camera
-   (`CHmsCamera.Location`) and asks the DLL for that eye's camera: head pose + eye offset on top
-   of the game camera. It then writes that back along with a matching FOV.
+   and odd frames the right eye. Each game frame, the plugin asks the DLL for that eye's head
+   pose and writes it into the cockpit camera's model (`CPlugVehicleCameraInternalModel`) along
+   with a matching FOV. The game builds the camera from it before rendering.
 3. At `Present`, the DLL copies the frame into that eye's OpenXR swapchain. Every eye image is
    submitted with the exact pose and FOV it was rendered with. The runtime's reprojection
    covers the one-frame offset between eyes.
-4. Frames where the plugin did not set a VR camera (menus, loading) are shown on a flat virtual
-   screen 2 m in front of you.
+4. Frames where the plugin did not set a VR camera (menus, replays, loading) are shown on a flat
+   virtual screen fixed in the world, 3 m in front of you by default.
 
 The game has to render 2× the headset refresh rate: 160 fps for an 80 Hz headset. SteamVR's
 motion smoothing covers you below that.
@@ -78,8 +78,8 @@ The Openplanet overlay (F3) is also visible in the headset.
 
 Head tracking uses the cockpit camera (press 3 in a map). It writes the head pose into the
 cockpit camera's model (`CPlugVehicleCameraInternalModel`), and the game builds the camera from
-it before rendering. Calibration compares the camera we ask for with the one the game rendered;
-don't flip the calibration checkboxes by hand while calibrating.
+it before rendering. Don't change the calibration checkboxes by hand while the guided
+calibration is running.
 
 ## Testing (in this order)
 
@@ -111,32 +111,28 @@ window. This renders the right eye upside down. Close one eye at a time:
 | Only the **right** eye is upside down | Timing is correct | Turn Eye check off and continue to step 4 |
 | Only the **left** eye is upside down | Off by one frame | Change **Frame latency** (0 ↔ 1) |
 | Both eyes flicker between upside down and normal | Off by a frame, and the game is running slower than the headset | Change Frame latency |
-| Nothing is upside down, and turning your head doesn't move the view | The game overwrites our camera before rendering | Try the other **Write point** values (Update → RenderEarly → Render), then **Camera field** = NextLocation |
-
-Also note the **Camera kept by game** percentage. It tells me how the game treats the camera
-field we write.
+| Nothing is upside down, and turning your head doesn't move the view | You're not in the cockpit camera | Press 3 until you're inside the car |
 
 ### 4. Head-tracking direction
-With Eye check off, look left/right/up/down and lean around:
-- View turns the wrong way left/right → toggle **Mirror X**.
-- Up/down inverted → toggle **Mirror Y**.
-- Leaning forward moves you backward → toggle **Mirror Z**.
-- Looking around feels right when the car is level but goes wrong on slopes or walls → toggle
-  **Column axes**.
+With Eye check off, press **F10** for the guided calibration. It asks you to make one movement at
+a time; answer **F** if it feels natural or **J** if something's off (that axis is flipped and
+you're asked again). F10 again exits without changes.
 
-### 5. Scale and FOV
-- Turn your head quickly while looking at a fixed object. If the world "swims" (moves with or
-  against your head), adjust **FOV correction** until it stays still.
-- Car feels too small or too large → adjust **World scale**.
+### 5. Scale
+Car feels too small or too large → adjust **World scale** (Advanced).
 
 ## Known limitations (v0.1)
 
 - The game HUD is drawn identically into both eyes, so it looks as if it's at infinite
-  distance. Hide it while driving if it bothers you.
-- Openplanet overlays are not visible in the headset; use the monitor for the status window.
+  distance. Hide it while driving (F6) if it bothers you.
 - VR Controllers aren't used. Drive with a keyboard, gamepad or wheel.
 - If SteamVR closes, the session is dropped and retried every 3 seconds.
 - Once loaded, the DLL stays in memory until the game exits; reloading the plugin only pauses
   and restarts it. This is because Openplanet's own Present hook may chain to ours. Rebuilding
   therefore requires closing the game.
 - Comfort options (horizon lock, vignette) are not in yet.
+
+## License
+
+MIT (see [LICENSE](LICENSE)). The bundled OpenXR loader and other third-party components are
+listed in [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt).

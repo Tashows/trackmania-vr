@@ -3,7 +3,6 @@ bool g_vrRunning = false;
 
 void Main()
 {
-	MigrateSettings();
 	if (Native::Load() && S_AutoStartVr) {
 		StartVr();
 	}
@@ -65,23 +64,16 @@ void Update(float dt)
 	}
 	UpdateAsyncRender();
 	UpdateGameHud();
-	if (S_WritePoint == WritePoint::InUpdate) {
-		ApplyVrCamera();
-	}
 }
 
+// RenderEarly runs inside Openplanet's frame, so the camera write lands in a known frame.
 void RenderEarly()
 {
-	if (S_WritePoint == WritePoint::InRenderEarly) {
-		ApplyVrCamera();
-	}
+	ApplyVrCamera();
 }
 
 void Render()
 {
-	if (S_WritePoint == WritePoint::InRender) {
-		ApplyVrCamera();
-	}
 	RenderVrPanel();
 }
 
@@ -158,40 +150,16 @@ void ApplyVrCamera()
 	if (!Native::IsReady() || !g_vrRunning) {
 		return;
 	}
-	Native::WriteConfig(S_WorldScale, S_Latency, S_EyeCheck, AxisFlags(), S_FovScale);
+	Native::WriteConfig(S_WorldScale, S_Latency, S_EyeCheck);
 
-	// Frames we leave alone are shown on the flat virtual screen.
-	bool wantStereo = S_StereoEnabled && !(S_StereoOnlyInMap && GetApp().CurrentPlayground is null)
-		&& !(S_StereoOnlyWhileDriving && !IsDriving());
-	if (!wantStereo || S_CameraMethod != CameraMethod::CockpitModel) {
-		RestoreCockpitModel();
-	}
+	// Frames we leave alone are shown on the flat virtual screen (outside a map the cockpit
+	// camera isn't active either).
+	bool wantStereo = S_StereoEnabled && !(S_StereoOnlyWhileDriving && !IsDriving());
 	if (!wantStereo) {
+		RestoreCockpitModel();
 		return;
 	}
-	if (S_CameraMethod == CameraMethod::CockpitModel) {
-		ApplyVrCockpit();
-		return;
-	}
-
-	auto camera = FindGameCamera();
-	if (camera is null) {
-		return;
-	}
-
-	bool useNext = S_CameraField == CameraField::CamNextLocation;
-	iso4 base = useNext ? camera.NextLocation : camera.Location;
-	bool fovIsHorizontal = camera.m_ViewportRatio == CHmsCamera::EViewportRatio::FovX;
-	iso4 eyeLocation;
-	float eyeFov;
-	if (!Native::Compose(base, fovIsHorizontal, eyeLocation, eyeFov)) {
-		return;
-	}
-	camera.Location = eyeLocation;
-	if (useNext) {
-		camera.NextLocation = eyeLocation;
-	}
-	camera.Fov = eyeFov;
+	ApplyVrCockpit();
 }
 
 void UpdateAsyncRender()

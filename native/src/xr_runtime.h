@@ -16,18 +16,17 @@ struct SharedBlock;
 
 // Owns the OpenXR instance/session and turns the game's presented frames into headset frames.
 //
-// Frames alternate between eyes: the plugin calls Compose() during a game frame to get the
-// camera for one eye, and OnPresent() later copies that frame's back buffer into the eye's
-// swapchain. Every eye image is submitted with the exact pose and FOV it was rendered with, so
-// the runtime's reprojection hides the one-frame offset between the two eyes. Frames without a
-// Compose() call (menus, loading screens) are shown as a flat virtual screen instead.
+// Frames alternate between eyes: the plugin calls ComposeModel() during a game frame to get the
+// cockpit camera for one eye, and OnPresent() later copies that frame's back buffer into the
+// eye's swapchain. Every eye image is submitted with the exact pose and FOV it was rendered with,
+// so the runtime's reprojection hides the one-frame offset between the two eyes. Frames without
+// a ComposeModel() call (menus, replays, loading screens) are shown as a flat virtual screen.
 class XrRuntime {
 public:
     // Render thread, from the Present hook.
     void OnPresent(IDXGISwapChain* swapChain);
-    // Script thread. Returns false when no stereo camera should be applied this frame.
-    // Compose() writes a full camera (outLoc); ComposeModel() writes cockpit model fields.
-    bool Compose(SharedBlock& sb);
+    // Script thread: writes this frame's eye as cockpit model fields. Returns false when no
+    // stereo camera should be applied this frame.
     bool ComposeModel(SharedBlock& sb);
     // Script thread: what ComposeModel asked for the frame whose camera the plugin sees right now.
     // Falls back to the latest request.
@@ -131,14 +130,10 @@ private:
     std::atomic<uint64_t> m_presentIndex{0};
     int32_t m_backbufferWidth = 0;
     int32_t m_backbufferHeight = 0;
-    Iso4 m_lastOut{};
-    Iso4 m_lastBase{};
-    bool m_haveLastOut = false;
 
     uint64_t m_statsTick = 0;
     uint32_t m_statsPresents = 0;
     uint32_t m_statsComposes = 0;
-    uint32_t m_statsReused = 0;
     uint32_t m_statsXrFrames = 0;
 };
 

@@ -371,7 +371,6 @@ void XrRuntime::DestroySession()
         std::lock_guard lock(m_mutex);
         m_viewsValid = false;
         m_records.fill({});
-        m_haveLastOut = false;
     }
     Shared().status &= ~(Status_SessionRunning | Status_Stereo);
 }
@@ -627,7 +626,7 @@ bool XrRuntime::Recenter(XrTime time, bool fullOrientation)
     }
 
     Vec3 unusedPos{};
-    MirrorPose(r, unusedPos, Axis_FlipZ);
+    XrToCamera(r, unusedPos);
     float pitch, yaw, roll;
     Mat3ToEuler(r, pitch, yaw, roll);
     XrSpace space = XR_NULL_HANDLE;
@@ -846,14 +845,12 @@ bool XrRuntime::PrepareEye(SharedBlock& sb, EyePose& out)
     tanH = std::max(tanH, tanV * aspect);
     tanV = tanH / aspect;
     const XrFovf fov{-atanf(tanH), atanf(tanH), atanf(tanV), -atanf(tanV)};
-    const float fovScale = sb.fovScale > 0.0f ? sb.fovScale : 1.0f;
-    const float gameTan = (sb.fovIsHorizontal ? tanH : tanV) * fovScale;
-    sb.outFov = 2.0f * atanf(gameTan) * 180.0f / kPi;
+    sb.outFov = 2.0f * atanf(sb.fovIsHorizontal ? tanH : tanV) * 180.0f / kPi;
 
     const XrQuaternionf& o = view.pose.orientation;
     Mat3 rot = QuatToMat3({o.x, o.y, o.z, o.w});
     Vec3 pos{view.pose.position.x, view.pose.position.y, view.pose.position.z};
-    MirrorPose(rot, pos, sb.axisFlags);
+    XrToCamera(rot, pos);
     pos = pos * sb.worldScale;
     if (sb.eyeCheck && eye == 1) {
         RollHalfTurn(rot);
@@ -867,33 +864,6 @@ void XrRuntime::Commit(SharedBlock& sb, const EyePose& e)
     sb.outEye = e.eye;
     m_records[e.target % m_records.size()] = {e.target, e.eye, e.xrPose, e.fov};
     sb.composeCount++;
-}
-
-bool XrRuntime::Compose(SharedBlock& sb)
-{
-    std::lock_guard lock(m_mutex);
-    EyePose e;
-    if (!PrepareEye(sb, e)) {
-        return false;
-    }
-
-    // If the game did not overwrite the camera since our last write, reuse the base we
-    // composed from instead of stacking the head pose on top of itself.
-    Iso4 input;
-    memcpy(input.v, sb.baseLoc, sizeof(input.v));
-    Iso4 base = input;
-    if (m_haveLastOut && memcmp(&input, &m_lastOut, sizeof(Iso4)) == 0) {
-        base = m_lastBase;
-        sb.baseReusedCount++;
-    }
-    const Iso4 out = ComposeCamera(base, e.rot, e.pos, (sb.axisFlags & Axis_ColumnBasis) != 0);
-    m_lastOut = out;
-    m_lastBase = base;
-    m_haveLastOut = true;
-
-    memcpy(sb.outLoc, out.v, sizeof(out.v));
-    Commit(sb, e);
-    return true;
 }
 
 bool XrRuntime::ComposeModel(SharedBlock& sb)
@@ -966,12 +936,9 @@ void XrRuntime::LogStats()
     }
     const SharedBlock& sb = Shared();
     const float seconds = float(now - m_statsTick) / 1000.0f;
-    Log("stats: %.0f presents/s, %.0f composes/s, %.0f%% camera reused, %.0f xr frames/s, "
+    Log("stats: %.0f presents/s, %.0f composes/s, %.0f xr frames/s, "
         "wait %.1f ms, eye mismatches %u, stereo %d, session %d",
         (sb.presentCount - m_statsPresents) / seconds, (sb.composeCount - m_statsComposes) / seconds,
-        sb.composeCount != m_statsComposes
-            ? 100.0f * float(sb.baseReusedCount - m_statsReused) / float(sb.composeCount - m_statsComposes)
-            : 0.0f,
         (sb.xrFramesSubmitted - m_statsXrFrames) / seconds, sb.waitFrameMs, sb.eyeMismatchCount,
         (sb.status & Status_Stereo) ? 1 : 0, m_sessionRunning ? 1 : 0);
     if (sb.composeCount != m_statsComposes) {
@@ -993,7 +960,6 @@ void XrRuntime::LogStats()
     m_statsTick = now;
     m_statsPresents = sb.presentCount;
     m_statsComposes = sb.composeCount;
-    m_statsReused = sb.baseReusedCount;
     m_statsXrFrames = sb.xrFramesSubmitted;
 }
 

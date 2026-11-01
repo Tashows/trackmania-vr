@@ -14,7 +14,7 @@ void ModelAnglesFromRotation(const Mat3& rotation, int flags, float out[3]);
 Vec3 ModelPosToOurs(const float pos[3], int flags);
 void OurPosToModel(const Vec3& pos, int flags, float out[3]);
 
-// Measures the rendered camera (SharedBlock::baseLoc) against the car's axes and updates the
+// Measures the rendered camera (SharedBlock::cameraLoc) against the car's axes and updates the
 // calibration gains (SharedBlock::calibGain) from changes since the last reset. requestedRel is
 // what was asked for the frame being measured.
 void MeasureCamera(SharedBlock& sb, const float requestedRel[6]);

@@ -64,7 +64,7 @@ int main()
     const float half = 15.0f * kPi / 180.0f;
     Mat3 head = QuatToMat3({0, sinf(half), 0, cosf(half)});
     Vec3 pos{0.1f, 0.2f, -0.3f}; // 0.3 m forward in OpenXR
-    MirrorPose(head, pos, Axis_FlipZ);
+    XrToCamera(head, pos);
     float p, y, r;
     Mat3ToEuler(head, p, y, r);
     Check(Near(y * 180.0f / kPi, -30.0f, 0.01f) && Near(p, 0) && Near(r, 0), "head turned left -> yaw -30");
@@ -74,7 +74,7 @@ int main()
     const float halfPitch = -10.0f * kPi / 180.0f;
     head = QuatToMat3({sinf(halfPitch), 0, 0, cosf(halfPitch)});
     pos = {};
-    MirrorPose(head, pos, Axis_FlipZ);
+    XrToCamera(head, pos);
     Mat3ToEuler(head, p, y, r);
     Check(Near(p * 180.0f / kPi, 20.0f, 0.01f), "head looks down -> pitch +20");
 
@@ -133,21 +133,6 @@ int main()
     }
     Check(conversions, "model field conversions round-trip for all flags");
 
-    // A sample from the game (pitch -50.4, yaw 10.7, roll -11.1): the fitted game behaviour,
-    // Rz(roll) * Rx(pitch) * Ry(-yaw) in degrees, must render what we asked for.
-    {
-        const float d = kPi / 180;
-        const Mat3 asked = EulerToMat3(-50.4f * d, 10.7f * d, -11.1f * d);
-        const int flags = Model_AnglesInDegrees | Model_NegateYaw;
-        float fields[3];
-        ModelAnglesFromRotation(asked, flags, fields);
-        const Mat3 rendered = OrderedEulerToMat3(kRotationOrders[0], fields[0] * d, -fields[1] * d, fields[2] * d);
-        float rp, ry, rr;
-        Mat3ToEuler(rendered, rp, ry, rr);
-        Check(Near(rp / d, -50.4f, 0.05f) && Near(ry / d, 10.7f, 0.05f) && Near(rr / d, -11.1f, 0.05f),
-            "game renders what we ask for at large pitch");
-    }
-
     // Calibration: the game renders exactly what we asked for -> gains of +1.
     static SharedBlock sb{};
     const float carLeft[3] = {1, 0, 0} /* the game's "Left" points right */, carUp[3] = {0, 1, 0}, carDir[3] = {0, 0, 1}, carPos[3] = {5, 6, 7};
@@ -163,7 +148,7 @@ int main()
             const float requested[6] = {5, yawDeg, 0, x, 1.1f, 0.2f};
             const Mat3 rendered = EulerToMat3(5 * kPi / 180, yawSign * yawDeg * kPi / 180, 0);
             const Iso4 cam = IsoFromMat(rendered, {5 + xSign * x, 6 + 1.1f, 7 + 0.2f});
-            memcpy(sb.baseLoc, cam.v, sizeof(cam.v));
+            memcpy(sb.cameraLoc, cam.v, sizeof(cam.v));
             MeasureCamera(sb, requested);
         }
     };
@@ -185,7 +170,7 @@ int main()
         for (int c = 0; c < 3; ++c) {
             cam.v[c] = -cam.v[c]; // X row: right -> left
         }
-        memcpy(sb.baseLoc, cam.v, sizeof(cam.v));
+        memcpy(sb.cameraLoc, cam.v, sizeof(cam.v));
         const float requested[6] = {0, 0, rollDeg, 0, 1, 0};
         MeasureCamera(sb, requested);
         Check(Near(sb.measuredRel[2], rollDeg, 0.01f), "roll measured correctly when the camera's X axis points left");

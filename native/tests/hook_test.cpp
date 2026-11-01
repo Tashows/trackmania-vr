@@ -13,11 +13,13 @@
 #include <cstring>
 #include <initializer_list>
 
+#include "../src/shared_block.h"
+
 using Microsoft::WRL::ComPtr;
 using PresentFn = HRESULT(STDMETHODCALLTYPE*)(IDXGISwapChain*, UINT, UINT);
 
 constexpr size_t kPresentSlot = 8;
-constexpr uint32_t kOffPresentCount = 144; // SharedBlock::presentCount
+constexpr uint32_t kOffPresentCount = offsetof(tmvr::SharedBlock, presentCount);
 
 enum class OverlayStyle {
     PatchedBeforeUs,    // overlay hooked first and calls its saved original
@@ -27,7 +29,7 @@ enum class OverlayStyle {
     OpenplanetStubHiddenUi, // same, but capturing before the overlay (UI hidden in VR)
 };
 
-constexpr uint32_t kOffCaptureAfterOverlay = 84; // SharedBlock::captureAfterOverlay
+constexpr uint32_t kOffCaptureAfterOverlay = offsetof(tmvr::SharedBlock, captureAfterOverlay);
 
 void** g_slot = nullptr;
 PresentFn g_overlayOriginal = nullptr;
@@ -118,7 +120,7 @@ __declspec(noinline) int Recurse(int depth)
 int main(int argc, char** argv)
 {
     if (argc < 2) {
-        printf("usage: hook_test <TrackmaniaVR.dll> [style 0-2 | crash]\n");
+        printf("usage: hook_test <TrackmaniaVR.dll> [style 0-4 | crash]\n");
         return 1;
     }
     if (argc > 2 && strcmp(argv[2], "crash") == 0) {

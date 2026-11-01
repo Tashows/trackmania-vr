@@ -38,6 +38,8 @@ $target = Join-Path $env:USERPROFILE "OpenplanetNext\Plugins\TrackmaniaVR"
 New-Item -ItemType Directory -Force $target | Out-Null
 try {
     Copy-Item (Join-Path $root "plugin\*") $target -Recurse -Force
+    Copy-Item (Join-Path $root "LICENSE") $target -Force
+    Copy-Item (Join-Path $root "THIRD_PARTY_NOTICES.txt") $target -Force
     Copy-Item (Join-Path $binDir "TrackmaniaVR.dll") $target -Force
     Copy-Item (Join-Path $binDir "openxr_loader.dll") $target -Force
     Copy-Item (Join-Path $binDir "dxgi_probe.exe") $target -Force

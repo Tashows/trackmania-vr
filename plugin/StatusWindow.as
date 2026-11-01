@@ -3,11 +3,9 @@
 uint64 g_rateTime = 0;
 uint g_ratePresents = 0;
 uint g_rateComposes = 0;
-uint g_rateReused = 0;
 uint g_rateXrFrames = 0;
 float g_presentsPerSec = 0;
 float g_composesPerSec = 0;
-float g_reusedPercent = 0;
 float g_xrFramesPerSec = 0;
 
 void UpdateRates()
@@ -23,15 +21,12 @@ void UpdateRates()
 	float seconds = float(now - g_rateTime) / 1000.0f;
 	uint presents = Native::ReadUInt(Native::OFF_PRESENT_COUNT);
 	uint composes = Native::ReadUInt(Native::OFF_COMPOSE_COUNT);
-	uint reused = Native::ReadUInt(Native::OFF_BASE_REUSED);
 	uint xrFrames = Native::ReadUInt(Native::OFF_XR_FRAMES);
 	g_presentsPerSec = float(presents - g_ratePresents) / seconds;
 	g_composesPerSec = float(composes - g_rateComposes) / seconds;
-	g_reusedPercent = composes != g_rateComposes ? 100.0f * float(reused - g_rateReused) / float(composes - g_rateComposes) : 0.0f;
 	g_xrFramesPerSec = float(xrFrames - g_rateXrFrames) / seconds;
 	g_ratePresents = presents;
 	g_rateComposes = composes;
-	g_rateReused = reused;
 	g_rateXrFrames = xrFrames;
 	g_rateTime = now;
 }
@@ -62,7 +57,7 @@ void RenderStatusWindow()
 			RenderCockpit();
 			UI::Separator();
 			if (UI::CollapsingHeader("Advanced")) {
-				RenderCalibration();
+				RenderAdvanced();
 			}
 		}
 	}
@@ -81,8 +76,7 @@ void RenderStatus()
 	UI::Text("Game frames: " + Text::Format("%.0f", g_presentsPerSec) + "/s   "
 		+ "VR camera writes: " + Text::Format("%.0f", g_composesPerSec) + "/s");
 	UI::Text("Headset frames: " + Text::Format("%.0f", g_xrFramesPerSec) + "/s   "
-		+ "Wait: " + Text::Format("%.1f", Native::ReadFloat(Native::OFF_WAIT_FRAME_MS)) + " ms");
-	UI::Text("Camera kept by game: " + Text::Format("%.0f", g_reusedPercent) + "%   "
+		+ "Wait: " + Text::Format("%.1f", Native::ReadFloat(Native::OFF_WAIT_FRAME_MS)) + " ms   "
 		+ "Eye mismatches: " + Native::ReadUInt(Native::OFF_EYE_MISMATCH));
 
 	int bbW = Native::ReadInt(Native::OFF_BACKBUFFER_W);
@@ -113,10 +107,6 @@ void RenderStatus()
 
 void RenderCockpit()
 {
-	if (S_CameraMethod != CameraMethod::CockpitModel) {
-		UI::Text("Camera method: overwrite the rendered camera (see Advanced)");
-		return;
-	}
 	if (g_model is null || !g_modelWritten) {
 		UI::TextWrapped("\\$fa0Head tracking needs the cockpit camera: in a map, press 3 until you're inside the car.");
 	} else {
@@ -156,17 +146,8 @@ void RenderCockpit()
 	}
 }
 
-void RenderCalibration()
+void RenderAdvanced()
 {
-	if (UI::BeginCombo("Camera method", S_CameraMethod == CameraMethod::CockpitModel ? "Cockpit model" : "Camera override")) {
-		if (UI::Selectable("Cockpit model", S_CameraMethod == CameraMethod::CockpitModel)) {
-			S_CameraMethod = CameraMethod::CockpitModel;
-		}
-		if (UI::Selectable("Camera override", S_CameraMethod == CameraMethod::CameraOverride)) {
-			S_CameraMethod = CameraMethod::CameraOverride;
-		}
-		UI::EndCombo();
-	}
 	S_EyeCheck = UI::Checkbox("Eye check (right eye upside down)", S_EyeCheck);
 	S_StereoOnlyWhileDriving = UI::Checkbox("Stereo only while driving (menus/replays on the virtual screen)", S_StereoOnlyWhileDriving);
 	S_ScreenDistance = UI::SliderFloat("Virtual screen distance (m)", S_ScreenDistance, 1.0f, 8.0f);
@@ -193,34 +174,6 @@ void RenderCalibration()
 		UI::EndCombo();
 	}
 	UI::Separator();
-
-	if (UI::BeginCombo("Write point", WritePointName(S_WritePoint))) {
-		for (int i = 0; i < 3; i++) {
-			WritePoint p = WritePoint(i);
-			if (UI::Selectable(WritePointName(p), p == S_WritePoint)) {
-				S_WritePoint = p;
-			}
-		}
-		UI::EndCombo();
-	}
-	if (UI::BeginCombo("Camera field", CameraFieldName(S_CameraField))) {
-		for (int i = 0; i < 2; i++) {
-			CameraField f = CameraField(i);
-			if (UI::Selectable(CameraFieldName(f), f == S_CameraField)) {
-				S_CameraField = f;
-			}
-		}
-		UI::EndCombo();
-	}
 	S_Latency = UI::SliderInt("Frame latency", S_Latency, 0, 3);
-	S_FovScale = UI::SliderFloat("FOV correction", S_FovScale, 0.5f, 2.0f);
 	S_WorldScale = UI::SliderFloat("World scale", S_WorldScale, 0.25f, 4.0f);
-
-	S_FlipX = UI::Checkbox("Mirror X", S_FlipX);
-	UI::SameLine();
-	S_FlipY = UI::Checkbox("Mirror Y", S_FlipY);
-	UI::SameLine();
-	S_FlipZ = UI::Checkbox("Mirror Z", S_FlipZ);
-	UI::SameLine();
-	S_ColumnBasis = UI::Checkbox("Column axes", S_ColumnBasis);
 }

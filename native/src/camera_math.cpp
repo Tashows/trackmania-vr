@@ -1,34 +1,9 @@
 #include "camera_math.h"
-#include "shared_block.h"
 
 #include <algorithm>
 #include <cmath>
 
 namespace tmvr {
-namespace {
-
-void SetAxis(Iso4& iso, int axis, const Vec3& a, bool columnBasis)
-{
-    if (columnBasis) {
-        iso.v[axis] = a.x;
-        iso.v[3 + axis] = a.y;
-        iso.v[6 + axis] = a.z;
-    } else {
-        iso.v[axis * 3] = a.x;
-        iso.v[axis * 3 + 1] = a.y;
-        iso.v[axis * 3 + 2] = a.z;
-    }
-}
-
-} // namespace
-
-Vec3 IsoAxis(const Iso4& iso, int axis, bool columnBasis)
-{
-    if (columnBasis) {
-        return {iso.v[axis], iso.v[3 + axis], iso.v[6 + axis]};
-    }
-    return {iso.v[axis * 3], iso.v[axis * 3 + 1], iso.v[axis * 3 + 2]};
-}
 
 Mat3 Mul(const Mat3& a, const Mat3& b)
 {
@@ -122,19 +97,14 @@ Mat3 QuatToMat3(const Quat& q)
     return r;
 }
 
-void MirrorPose(Mat3& rot, Vec3& pos, int axisFlags)
+void XrToCamera(Mat3& rot, Vec3& pos)
 {
-    const float s[3] = {
-        (axisFlags & Axis_FlipX) ? -1.0f : 1.0f,
-        (axisFlags & Axis_FlipY) ? -1.0f : 1.0f,
-        (axisFlags & Axis_FlipZ) ? -1.0f : 1.0f,
-    };
-    for (int i = 0; i < 3; ++i) {
-        for (int j = 0; j < 3; ++j) {
-            rot.m[i][j] *= s[i] * s[j];
-        }
-    }
-    pos = {pos.x * s[0], pos.y * s[1], pos.z * s[2]};
+    // S = diag(1, 1, -1): only the entries mixing Z with X or Y change sign.
+    rot.m[0][2] = -rot.m[0][2];
+    rot.m[1][2] = -rot.m[1][2];
+    rot.m[2][0] = -rot.m[2][0];
+    rot.m[2][1] = -rot.m[2][1];
+    pos.z = -pos.z;
 }
 
 void RollHalfTurn(Mat3& rot)
@@ -143,28 +113,6 @@ void RollHalfTurn(Mat3& rot)
         rot.m[i][0] = -rot.m[i][0];
         rot.m[i][1] = -rot.m[i][1];
     }
-}
-
-Iso4 ComposeCamera(const Iso4& base, const Mat3& eyeRot, const Vec3& eyePos, bool columnBasis)
-{
-    Vec3 axes[3];
-    for (int i = 0; i < 3; ++i) {
-        axes[i] = IsoAxis(base, i, columnBasis);
-    }
-
-    Iso4 out = base;
-    for (int i = 0; i < 3; ++i) {
-        // Column i of eyeRot is the eye's axis i in camera-local coordinates.
-        Vec3 a = axes[0] * eyeRot.m[0][i] + axes[1] * eyeRot.m[1][i] + axes[2] * eyeRot.m[2][i];
-        SetAxis(out, i, a, columnBasis);
-    }
-
-    Vec3 t{base.v[9], base.v[10], base.v[11]};
-    t = t + axes[0] * eyePos.x + axes[1] * eyePos.y + axes[2] * eyePos.z;
-    out.v[9] = t.x;
-    out.v[10] = t.y;
-    out.v[11] = t.z;
-    return out;
 }
 
 } // namespace tmvr

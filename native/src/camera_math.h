@@ -27,14 +27,11 @@ struct Iso4 {
 Mat3 QuatToMat3(const Quat& q);
 
 // Maps a pose from OpenXR space (right-handed, +Y up, -Z forward) into the game camera's
-// local space by mirroring the axes selected in axisFlags: R' = S R S, p' = S p.
-void MirrorPose(Mat3& rot, Vec3& pos, int axisFlags);
+// local space (X right, Y up, +Z forward) by mirroring Z: R' = S R S, p' = S p.
+void XrToCamera(Mat3& rot, Vec3& pos);
 
 // Rotates the pose 180 degrees around its own forward axis (used by the eye check).
 void RollHalfTurn(Mat3& rot);
-
-// Applies an eye pose, given in the base camera's local space, on top of the base camera.
-Iso4 ComposeCamera(const Iso4& base, const Mat3& eyeRot, const Vec3& eyePos, bool columnBasis);
 
 Mat3 Mul(const Mat3& a, const Mat3& b);
 Vec3 Mul(const Mat3& a, const Vec3& v);
@@ -57,8 +54,8 @@ extern const int kRotationOrders[kRotationOrderCount][3];
 Mat3 OrderedEulerToMat3(const int order[3], float pitch, float yaw, float roll);
 void Mat3ToOrderedEuler(const Mat3& r, const int order[3], float& pitch, float& yaw, float& roll);
 
-// Axis i of an iso4 (row i, or column i with columnBasis) and its translation.
-Vec3 IsoAxis(const Iso4& iso, int axis, bool columnBasis);
+// Axis i of an iso4 (row i) and its translation.
+inline Vec3 IsoAxis(const Iso4& iso, int axis) { return {iso.v[axis * 3], iso.v[axis * 3 + 1], iso.v[axis * 3 + 2]}; }
 inline Vec3 IsoPosition(const Iso4& iso) { return {iso.v[9], iso.v[10], iso.v[11]}; }
 
 } // namespace tmvr

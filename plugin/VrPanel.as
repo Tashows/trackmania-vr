@@ -55,12 +55,10 @@ void RenderVrPanelContents()
 
 	UI::Text("\\$f80Trackmania VR\\$z      " + KeyName(S_PanelKey) + ": hide all UI in VR");
 
-	if (S_CameraMethod == CameraMethod::CockpitModel) {
-		if (g_model !is null && g_modelWritten) {
-			UI::Text("Head tracking: " + OnOff(true));
-		} else {
-			UI::Text("Head tracking: \\$fa0press 3 for the cockpit camera\\$z");
-		}
+	if (g_model !is null && g_modelWritten) {
+		UI::Text("Head tracking: " + OnOff(true));
+	} else {
+		UI::Text("Head tracking: \\$fa0press 3 for the cockpit camera\\$z");
 	}
 	UI::Text(KeyName(S_RecenterKey) + ": recenter    " + KeyName(S_ToggleStereoKey) + ": stereo " + OnOff(S_StereoEnabled)
 		+ "    " + KeyName(S_EyeCheckKey) + ": eye check " + OnOff(S_EyeCheck));

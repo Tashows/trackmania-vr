@@ -73,11 +73,6 @@ __declspec(dllexport) int32_t TMVR_Start()
     return 1;
 }
 
-__declspec(dllexport) int32_t TMVR_Compose()
-{
-    return tmvr::Runtime().Compose(tmvr::Shared()) ? 1 : 0;
-}
-
 __declspec(dllexport) int32_t TMVR_ComposeModel()
 {
     return tmvr::Runtime().ComposeModel(tmvr::Shared()) ? 1 : 0;

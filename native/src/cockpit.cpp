@@ -79,9 +79,8 @@ void OurPosToModel(const Vec3& pos, int flags, float out[3])
 
 void MeasureCamera(SharedBlock& sb, const float requestedRel[6])
 {
-    const bool columns = (sb.axisFlags & Axis_ColumnBasis) != 0;
     Iso4 camera;
-    memcpy(camera.v, sb.baseLoc, sizeof(camera.v));
+    memcpy(camera.v, sb.cameraLoc, sizeof(camera.v));
     // CSceneVehicleVisState::Left is the car's X axis. Which way it really points is uncertain
     // (tests in VR contradicted each other), so this measurement only feeds the log; the
     // guided calibration lets the player decide.
@@ -93,8 +92,8 @@ void MeasureCamera(SharedBlock& sb, const float requestedRel[6])
 
     // Don't rely on which way the camera's X axis points either: derive the camera's right from
     // its up and forward with the same handedness the car's right has to the car's up/forward.
-    const Vec3 cameraUp = IsoAxis(camera, 1, columns);
-    const Vec3 cameraForward = IsoAxis(camera, 2, columns);
+    const Vec3 cameraUp = IsoAxis(camera, 1);
+    const Vec3 cameraForward = IsoAxis(camera, 2);
     const float handedness = Dot(Cross(carAxes[1], carAxes[2]), carAxes[0]) < 0 ? -1.0f : 1.0f;
     const Vec3 cameraAxes[3] = {Cross(cameraUp, cameraForward) * handedness, cameraUp, cameraForward};
 

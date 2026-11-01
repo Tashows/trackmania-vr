@@ -2,67 +2,58 @@
 // here must match native/src/shared_block.h.
 namespace Native
 {
-	const uint SHARED_VERSION = 6;
+	const uint SHARED_VERSION = 7;
 
 	const uint OFF_VERSION = 0;
 	const uint OFF_STATUS = 4;
-	const uint OFF_BASE_LOC = 8;
+	const uint OFF_CAMERA_LOC = 8;
 	const uint OFF_WORLD_SCALE = 56;
 	const uint OFF_LATENCY = 60;
 	const uint OFF_EYE_CHECK = 64;
-	const uint OFF_AXIS_FLAGS = 68;
-	const uint OFF_FOV_SCALE = 72;
-	const uint OFF_FOV_HORIZONTAL = 76;
-	const uint OFF_XR_ENABLED = 80;
-	const uint OFF_CAPTURE_AFTER_OVERLAY = 84;
-	const uint OFF_OUT_LOC = 88;
-	const uint OFF_OUT_FOV = 136;
-	const uint OFF_OUT_EYE = 140;
-	const uint OFF_PRESENT_COUNT = 144;
-	const uint OFF_COMPOSE_COUNT = 148;
-	const uint OFF_BASE_REUSED = 152;
-	const uint OFF_XR_FRAMES = 156;
-	const uint OFF_BACKBUFFER_W = 160;
-	const uint OFF_BACKBUFFER_H = 164;
-	const uint OFF_RECOMMENDED_W = 168;
-	const uint OFF_RECOMMENDED_H = 172;
-	const uint OFF_WAIT_FRAME_MS = 176;
-	const uint OFF_EYE_MISMATCH = 180;
-	const uint OFF_LAST_ERROR = 184;
-	const uint OFF_MODEL_BASE_PYR = 440;
-	const uint OFF_MODEL_BASE_POS = 452;
-	const uint OFF_MODEL_FLAGS = 464;
-	const uint OFF_OUT_PYR = 468;
-	const uint OFF_OUT_POS = 480;
-	const uint OFF_CAR_LEFT = 492;
-	const uint OFF_CAR_UP = 504;
-	const uint OFF_CAR_DIR = 516;
-	const uint OFF_CAR_POS = 528;
-	const uint OFF_REQUESTED_REL = 540;
-	const uint OFF_MEASURED_REL = 564;
-	const uint OFF_CALIB_GAIN = 588;
-	const uint OFF_CALIB_SAMPLES = 612;
-	const uint OFF_CAM_FOV = 636;
-	const uint OFF_CAM_ASPECT = 640;
-	const uint OFF_CAM_FOV_AXIS = 644;
-	const uint OFF_REQUESTED_FOV_H = 648;
-	const uint OFF_REQUESTED_FOV_V = 652;
-	const uint OFF_RENDERED_FOV_H = 656;
-	const uint OFF_RENDERED_FOV_V = 660;
-	const uint OFF_HEADSET_FOV_H = 664;
-	const uint OFF_HEADSET_FOV_V = 668;
-	const uint OFF_SCREEN_DISTANCE = 672;
-	const uint OFF_SCREEN_WIDTH = 676;
+	const uint OFF_FOV_HORIZONTAL = 68;
+	const uint OFF_XR_ENABLED = 72;
+	const uint OFF_CAPTURE_AFTER_OVERLAY = 76;
+	const uint OFF_OUT_FOV = 80;
+	const uint OFF_OUT_EYE = 84;
+	const uint OFF_PRESENT_COUNT = 88;
+	const uint OFF_COMPOSE_COUNT = 92;
+	const uint OFF_XR_FRAMES = 96;
+	const uint OFF_BACKBUFFER_W = 100;
+	const uint OFF_BACKBUFFER_H = 104;
+	const uint OFF_RECOMMENDED_W = 108;
+	const uint OFF_RECOMMENDED_H = 112;
+	const uint OFF_WAIT_FRAME_MS = 116;
+	const uint OFF_EYE_MISMATCH = 120;
+	const uint OFF_LAST_ERROR = 124;
+	const uint OFF_MODEL_BASE_PYR = 380;
+	const uint OFF_MODEL_BASE_POS = 392;
+	const uint OFF_MODEL_FLAGS = 404;
+	const uint OFF_OUT_PYR = 408;
+	const uint OFF_OUT_POS = 420;
+	const uint OFF_CAR_LEFT = 432;
+	const uint OFF_CAR_UP = 444;
+	const uint OFF_CAR_DIR = 456;
+	const uint OFF_CAR_POS = 468;
+	const uint OFF_REQUESTED_REL = 480;
+	const uint OFF_MEASURED_REL = 504;
+	const uint OFF_CALIB_GAIN = 528;
+	const uint OFF_CALIB_SAMPLES = 552;
+	const uint OFF_CAM_FOV = 576;
+	const uint OFF_CAM_ASPECT = 580;
+	const uint OFF_CAM_FOV_AXIS = 584;
+	const uint OFF_REQUESTED_FOV_H = 588;
+	const uint OFF_REQUESTED_FOV_V = 592;
+	const uint OFF_RENDERED_FOV_H = 596;
+	const uint OFF_RENDERED_FOV_V = 600;
+	const uint OFF_HEADSET_FOV_H = 604;
+	const uint OFF_HEADSET_FOV_V = 608;
+	const uint OFF_SCREEN_DISTANCE = 612;
+	const uint OFF_SCREEN_WIDTH = 616;
 
 	const uint STATUS_HOOKS = 1;
 	const uint STATUS_XR_INSTANCE = 2;
 	const uint STATUS_SESSION_RUNNING = 4;
 	const uint STATUS_STEREO = 8;
-
-	const int AXIS_FLIP_X = 1;
-	const int AXIS_FLIP_Y = 2;
-	const int AXIS_FLIP_Z = 4;
-	const int AXIS_COLUMN_BASIS = 8;
 
 	const int MODEL_DEGREES = 1;
 	const int MODEL_NEGATE_PITCH = 2;
@@ -76,7 +67,6 @@ namespace Native
 	Import::Library@ g_lib;
 	Import::Function@ g_fnInit;
 	Import::Function@ g_fnStart;
-	Import::Function@ g_fnCompose;
 	Import::Function@ g_fnComposeModel;
 	Import::Function@ g_fnMeasure;
 	Import::Function@ g_fnCalibrationReset;
@@ -112,15 +102,14 @@ namespace Native
 		auto fnGetShared = g_lib.GetFunction("TMVR_GetShared");
 		@g_fnInit = g_lib.GetFunction("TMVR_Init");
 		@g_fnStart = g_lib.GetFunction("TMVR_Start");
-		@g_fnCompose = g_lib.GetFunction("TMVR_Compose");
 		@g_fnComposeModel = g_lib.GetFunction("TMVR_ComposeModel");
 		@g_fnMeasure = g_lib.GetFunction("TMVR_Measure");
 		@g_fnCalibrationReset = g_lib.GetFunction("TMVR_CalibrationReset");
 		@g_fnRecenter = g_lib.GetFunction("TMVR_Recenter");
 		@g_fnShutdown = g_lib.GetFunction("TMVR_Shutdown");
-		if (fnGetShared is null || g_fnInit is null || g_fnStart is null || g_fnCompose is null
-			|| g_fnComposeModel is null || g_fnMeasure is null || g_fnCalibrationReset is null
-			|| g_fnRecenter is null || g_fnShutdown is null) {
+		if (fnGetShared is null || g_fnInit is null || g_fnStart is null || g_fnComposeModel is null
+			|| g_fnMeasure is null || g_fnCalibrationReset is null || g_fnRecenter is null
+			|| g_fnShutdown is null) {
 			return Fail("TrackmaniaVR.dll is missing exports (old build?)");
 		}
 
@@ -154,7 +143,6 @@ namespace Native
 		g_shared = 0;
 		@g_fnInit = null;
 		@g_fnStart = null;
-		@g_fnCompose = null;
 		@g_fnComposeModel = null;
 		@g_fnMeasure = null;
 		@g_fnCalibrationReset = null;
@@ -193,28 +181,12 @@ namespace Native
 		Dev::Write(g_shared + OFF_CAPTURE_AFTER_OVERLAY, value);
 	}
 
-	void WriteConfig(float worldScale, int latency, bool eyeCheck, int axisFlags, float fovScale)
+	void WriteConfig(float worldScale, int latency, bool eyeCheck)
 	{
 		int eyeCheckValue = eyeCheck ? 1 : 0;
 		Dev::Write(g_shared + OFF_WORLD_SCALE, worldScale);
 		Dev::Write(g_shared + OFF_LATENCY, latency);
 		Dev::Write(g_shared + OFF_EYE_CHECK, eyeCheckValue);
-		Dev::Write(g_shared + OFF_AXIS_FLAGS, axisFlags);
-		Dev::Write(g_shared + OFF_FOV_SCALE, fovScale);
-	}
-
-	// Asks the native side for this frame's eye camera, built on top of the game's camera.
-	bool Compose(const iso4 &in base, bool fovIsHorizontal, iso4 &out outLoc, float &out outFov)
-	{
-		int fovHorizontalValue = fovIsHorizontal ? 1 : 0;
-		Dev::Write(g_shared + OFF_FOV_HORIZONTAL, fovHorizontalValue);
-		Dev::Write(g_shared + OFF_BASE_LOC, base);
-		if (g_fnCompose.CallInt32() == 0) {
-			return false;
-		}
-		outLoc = Dev::ReadIso4(g_shared + OFF_OUT_LOC);
-		outFov = Dev::ReadFloat(g_shared + OFF_OUT_FOV);
-		return true;
 	}
 
 	// Asks the native side for this frame's eye, as cockpit camera model fields built on top of
@@ -246,7 +218,7 @@ namespace Native
 	// Compares the camera the game rendered with what the last compose asked for.
 	void Measure(const iso4 &in camera, CSceneVehicleVisState@ car)
 	{
-		Dev::Write(g_shared + OFF_BASE_LOC, camera);
+		Dev::Write(g_shared + OFF_CAMERA_LOC, camera);
 		Dev::Write(g_shared + OFF_CAR_LEFT, car.Left);
 		Dev::Write(g_shared + OFF_CAR_UP, car.Up);
 		Dev::Write(g_shared + OFF_CAR_DIR, car.Dir);
