@@ -1,0 +1,8 @@
+[meta]
+name     = "Trackmania VR"
+author   = "Tasos (Tashows) Maschalidis"
+category = "Camera"
+version  = "0.1.0"
+
+[script]
+dependencies = [ "VehicleState" ]
