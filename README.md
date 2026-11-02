@@ -14,7 +14,7 @@ build.ps1 builds the DLL and installs everything into OpenplanetNext\Plugins\Tra
 ## How to install as a player
 
 1) [Install Openplanet](https://openplanet.dev/docs/tutorials/installation)
-2) Download the latest release's .op file (latest is [TrackmaniavVR-v0.1.1.op](https://github.com/Tashows/trackmania-vr/releases/download/v0.1.1/TrackmaniaVR-0.1.1.op))
+2) Download the latest release's .op file (latest is [TrackmaniaVR-v0.1.1.op](https://github.com/Tashows/trackmania-vr/releases/download/v0.1.1/TrackmaniaVR-0.1.1.op))
 3) Place it in %USERPROFILE%\OpenplanetNext\Plugins (replace %USERPROFILE% with your windows local user name)
 4) Start SteamVR, then launch Trackmania
 5) Once the game launches, press F3 to view the openplanet menu and select signature mode -> Developer. This should automatically enable the plugin. This plugin is not reviewed/verified by Openplanet and thus has restricted capabilities: no leaderboard records, and online play will be blocked on most maps.
